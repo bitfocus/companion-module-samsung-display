@@ -98,6 +98,32 @@ class instance extends instance_skel {
 
 	init_presets() {
 		let presets = []
+		presets.push({
+			category: 'Basics',
+			label: 'Power on',
+			bank: {
+				style: 'text',
+				text: `Power On`,
+				size: '14',
+				color: this.rgb(255, 255, 255),
+				bgcolor: this.rgb(0, 0, 0),
+			},
+			actions: [{ action: 'powerOn', options: [] }],
+			feedbacks: [],
+		})
+		presets.push({
+			category: 'Basics',
+			label: 'Power off',
+			bank: {
+				style: 'text',
+				text: `Power Off`,
+				size: '14',
+				color: this.rgb(255, 255, 255),
+				bgcolor: this.rgb(0, 0, 0),
+			},
+			actions: [{ action: 'powerOff', options: [] }],
+			feedbacks: [],
+		})
 		this.setPresetDefinitions(presets)
 	}
 
