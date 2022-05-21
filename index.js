@@ -1,5 +1,4 @@
 const tcp = require('../../tcp')
-const udp = require('../../udp')
 const instance_skel = require('../../instance_skel')
 
 class instance extends instance_skel {
@@ -62,7 +61,15 @@ class instance extends instance_skel {
 			})
 
 			this.socket.on('data', (data) => {
-				console.log(data.toString())
+				// console.log(data)
+				let powerOff = new Buffer.from([0xaa, 0xff, 0x01, 0x03, 0x41, 0x11, 0x00, 0x55], 'latin1')
+				let powerOn = new Buffer.from([0xaa, 0xff, 0x01, 0x03, 0x41, 0x11, 0x01, 0x56], 'latin1')
+				if(Buffer.compare(data, powerOff) === 0) {
+					console.log('POWER OFF');
+				}
+				if(Buffer.compare(data, powerOn) === 0) {
+					console.log('POWER ON');
+				}
 			})
 		}
 	}
@@ -86,15 +93,6 @@ class instance extends instance_skel {
 
 		this.debug('destroy', this.id)
 	}
-
-	CHOICES_END = [
-		{ id: '', label: 'None' },
-		{ id: '\n', label: 'LF - \\n (Common UNIX/Mac)' },
-		{ id: '\r\n', label: 'CRLF - \\r\\n (Common Windows)' },
-		{ id: '\r', label: 'CR - \\r (Old MacOS)' },
-		{ id: '\x00', label: 'NULL - \\x00 (Can happen)' },
-		{ id: '\n\r', label: 'LFCR - \\n\\r (Just stupid)' },
-	]
 
 	init_presets() {
 		let presets = []
@@ -131,47 +129,11 @@ class instance extends instance_skel {
 		this.setActions({
 			powerOn: {
 				label: 'Power On Display',
-				options: [
-					{
-						type: 'dropdown',
-						id: 'id_end',
-						label: 'Command End Character:',
-						default: '\n',
-						choices: this.CHOICES_END,
-					},
-				],
+				options: [],
 			},
 			powerOff: {
 				label: 'Power Off Display',
-				options: [
-					{
-						type: 'dropdown',
-						id: 'id_end',
-						label: 'Command End Character:',
-						default: '\n',
-						choices: this.CHOICES_END,
-					},
-				],
-			},
-			sendCustom: {
-				label: 'Send Custom Command',
-				options: [
-					{
-						type: 'textwithvariables',
-						id: 'id_send',
-						label: 'Command:',
-						tooltip: 'Use %hh to insert Hex codes',
-						default: '',
-						width: 6,
-					},
-					{
-						type: 'dropdown',
-						id: 'id_end',
-						label: 'Command End Character:',
-						default: '\n',
-						choices: this.CHOICES_END,
-					},
-				],
+				options: [],
 			},
 		})
 	}
@@ -181,12 +143,7 @@ class instance extends instance_skel {
 		let end
 
 		switch (action.action) {
-			case 'sendCustom':
-				this.parseVariables(action.options.id_send, (value) => {
-					cmd = unescape(value)
-				})
-				end = action.options.id_end
-				break
+			// response aa ff 01 03 41 11 01 56
 			case 'powerOn':
 				cmd = Buffer.from([
 					'0xAA',
@@ -201,10 +158,10 @@ class instance extends instance_skel {
 					'0x01',
 					'0x01',
 					'0x11',
-				])
-				end = action.options.id_end
+				], 'latin1')
 				break
 			case 'powerOff':
+			// response  aa ff 01 03 41 11 00 55
 				cmd = Buffer.from([
 					'0xAA',
 					'0x11',
@@ -218,8 +175,7 @@ class instance extends instance_skel {
 					'0x01',
 					'0x00',
 					'0x10',
-				])
-				end = action.options.id_end
+				], 'latin1')
 				break
 		}
 
@@ -229,7 +185,8 @@ class instance extends instance_skel {
 		 * which then escapes character values over 0x7F
 		 * and destroys the 'binary' content
 		 */
-		let sendBuf = Buffer.from(cmd + end, 'latin1')
+		// let sendBuf = Buffer.from(cmd + end, 'latin1')
+		let sendBuf = cmd
 
 		if (sendBuf != '') {
 			this.debug('sending ', sendBuf, 'to', this.config.host)
