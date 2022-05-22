@@ -65,10 +65,10 @@ class instance extends instance_skel {
 				let powerOff = new Buffer.from([0xaa, 0xff, 0x01, 0x03, 0x41, 0x11, 0x00, 0x55], 'latin1')
 				let powerOn = new Buffer.from([0xaa, 0xff, 0x01, 0x03, 0x41, 0x11, 0x01, 0x56], 'latin1')
 				if(Buffer.compare(data, powerOff) === 0) {
-					console.log('POWER OFF');
+					this.log('info', 'POWER OFF command received by Display')
 				}
 				if(Buffer.compare(data, powerOn) === 0) {
-					console.log('POWER ON');
+					this.log('info', 'POWER ON command received by Display')
 				}
 			})
 		}
