@@ -10,7 +10,7 @@
 	"manufacturer": "Samsung",
 	"product": "MD Display",
 	"shortname": "Samsung Display",
-	"homepage": "https://github.com/bitfocus/companion-module-samsung-display-udp#readme",
+	"homepage": "https://github.com/bitfocus/companion-module-samsung-display#readme",
 	"main": "index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1"
