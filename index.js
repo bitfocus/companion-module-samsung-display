@@ -1,88 +1,74 @@
-const tcp = require('../../tcp')
-const instance_skel = require('../../instance_skel')
+const { InstanceBase, InstanceStatus, TCPHelper, Regex, runEntrypoint } = require('@companion-module/base')
+const { combineRgb } = require('@companion-module/base')
 
-class instance extends instance_skel {
-	/**
-	 * Create an instance of the module
-	 *
-	 * @param {EventEmitter} system - the brains of the operation
-	 * @param {string} id - the instance ID
-	 * @param {Object} config - saved user configuration parameters
-	 * @since 1.0.0
-	 */
-	constructor(system, id, config) {
-		super(system, id, config)
+class SamsungDisplayInstance extends InstanceBase {
+	init(config) {
+		this.config = config
 		this.actions() // export actions
-		this.init_presets() // export presets
+		this.init_presets()
+		this.init_tcp()
 	}
 
-	updateConfig(config) {
-		this.init_presets()
+	configUpdated(config) {
+		this.config = config
 
 		if (this.socket !== undefined) {
 			this.socket.destroy()
 			delete this.socket
 		}
 
-		this.config = config
-
-		this.init_tcp()
-	}
-
-	init() {
-		this.init_presets()
 		this.init_tcp()
 	}
 
 	init_tcp() {
-		if (this.socket !== undefined) {
-			this.socket.destroy()
-			delete this.socket
+		let self = this
+
+		if (self.socket !== undefined) {
+			self.socket.destroy()
+			delete self.socket
 		}
 
-		this.status(this.STATE_WARNING, 'Connecting')
+		self.updateStatus(InstanceStatus.Connecting)
 
-		if (this.config.host) {
-			this.socket = new tcp(this.config.host, 1515)
+		if (self.config.host) {
+			self.socket = new TCPHelper(self.config.host, 1515)
 
-			this.socket.on('status_change', (status, message) => {
-				this.status(status, message)
+			self.socket.on('status_change', (status, message) => {
+				self.updateStatus(status, message)
 			})
 
-			this.socket.on('error', (err) => {
-				this.debug('Network error', err)
-				this.status(this.STATE_ERROR, err)
-				this.log('error', 'Network error: ' + err.message)
+			self.socket.on('error', (err) => {
+				self.log('debug', 'Network error', err)
+				self.log('error', 'Network error: ' + err.message)
 			})
 
-			this.socket.on('connect', () => {
-				this.status(this.STATE_OK)
-				this.debug('Connected')
+			self.socket.on('connect', () => {
+				self.log('debug', 'Connected')
 			})
 
-			this.socket.on('data', (data) => {
-				// console.log(data)
+			self.socket.on('data', (data) => {
+				// self.log('debug', data)
 				let powerOff = new Buffer.from([0xaa, 0xff, 0x01, 0x03, 0x41, 0x11, 0x00, 0x55], 'latin1')
 				let powerOn = new Buffer.from([0xaa, 0xff, 0x01, 0x03, 0x41, 0x11, 0x01, 0x56], 'latin1')
-				if(Buffer.compare(data, powerOff) === 0) {
-					this.log('info', 'POWER OFF command received by Display')
+				if (Buffer.compare(data, powerOff) === 0) {
+					self.log('info', 'POWER OFF command received by Display')
 				}
-				if(Buffer.compare(data, powerOn) === 0) {
-					this.log('info', 'POWER ON command received by Display')
+				if (Buffer.compare(data, powerOn) === 0) {
+					self.log('info', 'POWER ON command received by Display')
 				}
 			})
 		}
 	}
 
 	// Return config fields for web config
-	config_fields() {
+	getConfigFields() {
 		return [
 			{
 				type: 'textinput',
 				id: 'host',
 				label: 'Target IP',
 				width: 6,
-				regex: this.REGEX_IP,
+				regex: Regex.IP,
 			},
 		]
 	}
@@ -91,91 +77,80 @@ class instance extends instance_skel {
 	destroy() {
 		this.socket.destroy()
 
-		this.debug('destroy', this.id)
+		this.log('debug', 'destroy ' + this.id)
 	}
 
 	init_presets() {
 		let presets = []
 		presets.push({
 			category: 'Basics',
-			label: 'Power on',
-			bank: {
-				style: 'text',
+			name: 'Power on',
+			type: 'button',
+			style: {
 				text: `Power On`,
 				size: '14',
-				color: this.rgb(255, 255, 255),
-				bgcolor: this.rgb(0, 0, 0),
+				color: combineRgb(255, 255, 255),
+				bgcolor: combineRgb(0, 0, 0),
 			},
-			actions: [{ action: 'powerOn', options: [] }],
+			steps: [{ down: [{ actionId: 'powerOn' }] }],
 			feedbacks: [],
 		})
 		presets.push({
 			category: 'Basics',
-			label: 'Power off',
-			bank: {
-				style: 'text',
+			name: 'Power off',
+			type: 'button',
+			style: {
 				text: `Power Off`,
 				size: '14',
-				color: this.rgb(255, 255, 255),
-				bgcolor: this.rgb(0, 0, 0),
+				color: combineRgb(255, 255, 255),
+				bgcolor: combineRgb(0, 0, 0),
 			},
-			actions: [{ action: 'powerOff', options: [] }],
+			steps: [{ down: [{ actionId: 'powerOff' }] }],
 			feedbacks: [],
 		})
 		this.setPresetDefinitions(presets)
 	}
 
 	actions(system) {
-		this.setActions({
+		this.setActionDefinitions({
 			powerOn: {
-				label: 'Power On Display',
+				name: 'Power On Display',
 				options: [],
+				callback: async (action) => {
+					await this.doAction(action)
+				},
 			},
 			powerOff: {
-				label: 'Power Off Display',
+				name: 'Power Off Display',
 				options: [],
+				callback: async (action) => {
+					await this.doAction(action)
+				},
 			},
 		})
 	}
 
-	action(action) {
+	doAction(action) {
 		let cmd
 		let end
 
-		switch (action.action) {
-			// response aa ff 01 03 41 11 01 56
+		switch (action.actionId) {
 			case 'powerOn':
-				cmd = Buffer.from([
-					'0xAA',
-					'0x11',
-					'0x01',
-					'0x01',
-					'0x01',
-					'0x14',
-					'0xAA',
-					'0x11',
-					'0xFE',
-					'0x01',
-					'0x01',
-					'0x11',
-				], 'latin1')
+				// response aa ff 01 03 41 11 01 56
+				cmd = Buffer.from(
+					['0xAA', '0x11', '0x01', '0x01', '0x01', '0x14', '0xAA', '0x11', '0xFE', '0x01', '0x01', '0x11'],
+					'latin1',
+				)
 				break
 			case 'powerOff':
-			// response  aa ff 01 03 41 11 00 55
-				cmd = Buffer.from([
-					'0xAA',
-					'0x11',
-					'0x01',
-					'0x01',
-					'0x00',
-					'0x13',
-					'0xAA',
-					'0x11',
-					'0xFE',
-					'0x01',
-					'0x00',
-					'0x10',
-				], 'latin1')
+				// response aa ff 01 03 41 11 00 55
+				cmd = Buffer.from(
+					['0xAA', '0x11', '0x01', '0x01', '0x00', '0x13', '0xAA', '0x11', '0xFE', '0x01', '0x00', '0x10'],
+					'latin1',
+				)
+				break
+			default:
+				this.log('debug', 'unknown action')
 				break
 		}
 
@@ -189,14 +164,14 @@ class instance extends instance_skel {
 		let sendBuf = cmd
 
 		if (sendBuf != '') {
-			this.debug('sending ', sendBuf, 'to', this.config.host)
+			this.log('debug', 'sending ' + sendBuf + ' to ' + this.config.host)
 
-			if (this.socket !== undefined && this.socket.connected) {
+			if (this.socket !== undefined && this.socket.isConnected) {
 				this.socket.send(sendBuf)
 			} else {
-				this.debug('Socket not connected :(')
+				this.log('debug', 'Socket not connected :(')
 			}
 		}
 	}
 }
-exports = module.exports = instance
+runEntrypoint(SamsungDisplayInstance, [])

@@ -1,0 +1,26 @@
+{
+	"id": "samsung-display",
+	"name": "samsung-display",
+	"legacyIds": [],
+	"version": "0.0.0",
+	"description": "Samsung Display",
+	"runtime": {
+		"type": "node18",
+		"api": "nodejs-ipc",
+		"apiVersion": "0.0.0",
+		"entrypoint": "../index.js"
+	},
+	"keywords": ["Samsung", "Display"],
+	"manufacturer": "Samsung",
+	"products": ["MD Display"],
+	"shortname": "Samsung Display",
+	"repository": "git+https://github.com/bitfocus/companion-module-samsung-display.git",
+	"maintainers": [
+		{
+			"name": "Jeffrey Davidsz",
+			"email": "jeffrey.davidsz@vicreo.eu"
+		}
+	],
+	"license": "MIT",
+	"bugs": "https://github.com/bitfocus/companion-module-samsung-display/issues"
+}
