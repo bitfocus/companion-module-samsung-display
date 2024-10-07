@@ -1,19 +1,11 @@
 {
 	"name": "samsung-display",
-	"version": "1.0.5",
-	"api_version": "1.0.0",
-	"description": "Samsung Display",
-	"keywords": [
-		"Samsung",
-		"Display"
-	],
-	"manufacturer": "Samsung",
-	"product": "MD Display",
-	"shortname": "Samsung Display",
+	"version": "2.0.0",
+        "main": "index.js",
 	"homepage": "https://github.com/bitfocus/companion-module-samsung-display#readme",
-	"main": "index.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"format": "prettier -w ."
 	},
 	"repository": {
 		"type": "git",
@@ -21,7 +13,12 @@
 	},
 	"author": "Jeffrey Davidsz <jeffrey.davidsz@vicreo.eu>",
 	"license": "MIT",
-	"bugs": {
-		"url": "https://github.com/bitfocus/companion-module-samsung-display/issues"
+	"dependencies": {
+		"@companion-module/base": "~1.11.0"
+	},
+	"prettier": "@companion-module/tools/.prettierrc.json",
+	"devDependencies": {
+		"@companion-module/tools": "^2.1.0",
+		"prettier": "^3.3.3"
 	}
 }
