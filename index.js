@@ -1,10 +1,70 @@
 const { InstanceBase, InstanceStatus, TCPHelper, Regex, runEntrypoint } = require('@companion-module/base')
 const { combineRgb } = require('@companion-module/base')
+const SamsungD = require('samsung-lfd')
 
 class SamsungDisplayInstance extends InstanceBase {
 	init(config) {
 		this.config = config
-		this.actions() // export actions
+		this.DATA = {}
+
+		this.CHOICES_INPUT = [
+			{ id: 'Component', label: 'Component' },
+			{ id: 'AV', label: 'AV' },
+			{ id: 'PC', label: 'PC' },
+			{ id: 'DVI', label: 'DVI' },
+			{ id: 'MagicInfo', label: 'MagicInfo' },
+			{ id: 'HDMI1', label: 'HDMI1' },
+			{ id: 'HDMI1-PC', label: 'HDMI1-PC' },
+			{ id: 'HDMI2', label: 'HDMI2' },
+			{ id: 'HDMI2-PC', label: 'HDMI2-PC' },
+			{ id: 'DP', label: 'DP' },
+		]
+
+		this.CHOICES_MUTE = [
+			{ id: 'off', label: 'Off' },
+			{ id: 'on', label: 'On' },
+		]
+
+		this.CHOICES_POWER = this.CHOICES_MUTE
+
+		this.CHOICES_VOLUME = [
+			{ id: '0', label: '0' },
+			{ id: '25', label: '25' },
+			{ id: '50', label: '50' },
+			{ id: '75', label: '75' },
+			{ id: '100', label: '100' },
+		]
+
+		this.PRESETS_SETTINGS = [
+			{
+				action: 'input',
+				setting: 'input_name',
+				feedback: 'input',
+				label: '',
+				choices: this.CHOICES_INPUT,
+				category: 'Input',
+			},
+			{
+				action: 'mute',
+				setting: 'state',
+				feedback: 'mute',
+				label: 'Mute ',
+				choices: this.CHOICES_MUTE,
+				category: 'Volume',
+			},
+			{
+				action: 'volume',
+				setting: 'volume',
+				feedback: 'volume',
+				label: 'Volume ',
+				choices: this.CHOICES_VOLUME,
+				category: 'Volume',
+			},
+		]
+
+		this.actions(this) // export actions
+		this.init_variables()
+		this.init_feedbacks()
 		this.init_presets()
 		this.init_tcp()
 	}
@@ -23,41 +83,93 @@ class SamsungDisplayInstance extends InstanceBase {
 	init_tcp() {
 		let self = this
 
-		if (self.socket !== undefined) {
-			self.socket.destroy()
-			delete self.socket
+		if (self.dev !== undefined) {
+			self.dev.process('#close')
+			delete self.dev
+		}
+
+		if (!self.config.host) {
+			self.updateStatus(InstanceStatus.BadConfig, `IP address is missing`)
+			return
+		} else if (!self.config.port) {
+			// TODO(Peter): Handle a lack of port in an existing config...
+			self.updateStatus(InstanceStatus.BadConfig, `Port is missing`)
+			return
+		} else if (!self.config.id) {
+			// TODO(Peter): Handle a lack of id in an existing config...
+			self.updateStatus(InstanceStatus.BadConfig, `ID is missing`)
+			return
 		}
 
 		self.updateStatus(InstanceStatus.Connecting)
 
-		if (self.config.host) {
-			self.socket = new TCPHelper(self.config.host, 1515)
-
-			self.socket.on('status_change', (status, message) => {
-				self.updateStatus(status, message)
-			})
-
-			self.socket.on('error', (err) => {
-				self.log('debug', 'Network error', err)
-				self.log('error', 'Network error: ' + err.message)
-			})
-
-			self.socket.on('connect', () => {
-				self.log('debug', 'Connected')
-			})
-
-			self.socket.on('data', (data) => {
-				// self.log('debug', data)
-				let powerOff = new Buffer.from([0xaa, 0xff, 0x01, 0x03, 0x41, 0x11, 0x00, 0x55], 'latin1')
-				let powerOn = new Buffer.from([0xaa, 0xff, 0x01, 0x03, 0x41, 0x11, 0x01, 0x56], 'latin1')
-				if (Buffer.compare(data, powerOff) === 0) {
-					self.log('info', 'POWER OFF command received by Display')
+		// Disconnect = false to match the previous behaviour of the module, although we don't get as much connection feedback this way
+		self.dev = new SamsungD(
+			{ host: self.config.host, port: self.config.port, id: self.config.id },
+			{ disconnect: false },
+		)
+		// self.dev.emitter.on('connectionData', (data) => self.log('debug', 'Conn Data ' + JSON.stringify(data)))
+		self.dev.emitter.on('connectionStatus', (data) => {
+			self.log('debug', 'Conn Status ' + JSON.stringify(data))
+			if (data.status !== undefined && data.status != '') {
+				switch (data.status) {
+					case 'connected':
+						self.updateStatus(InstanceStatus.Ok)
+						break
+					default:
+						self.updateStatus(InstanceStatus.ConnectionFailure, 'Failed to connect - ' + data.status)
 				}
-				if (Buffer.compare(data, powerOn) === 0) {
-					self.log('info', 'POWER ON command received by Display')
+			} else {
+				self.updateStatus(InstanceStatus.UnknownError, 'Unknown failure connecting')
+			}
+		})
+		self.dev.emitter.on('commandForDevice', (data) => self.log('debug', 'Tx: ' + JSON.stringify(data)))
+		self.dev.emitter.on('responseFromDevice', (data) => {
+			self.log('debug', 'Rx: ' + JSON.stringify(data))
+			if (data.status !== undefined && data.status != '') {
+				switch (data.status) {
+					case 'OK':
+						// TODO(Peter): Deduplicate this
+						self.updateStatus(InstanceStatus.Ok)
+						// Handle updated data
+						if (typeof data.value === 'object' || Array.isArray(data.value)) {
+							for (var k in data.value) {
+								self.DATA[k] = data.value[k]
+							}
+						} else {
+							self.DATA[data.req] = data.value
+						}
+						self.log('debug', 'Overall data: ' + JSON.stringify(self.DATA))
+						// TODO(Peter): Could potentially be slightly more efficient here
+						this.setVariableValues(self.DATA)
+						// TODO(Peter): Could potentially be slightly more efficient here
+						this.checkFeedbacks('input')
+						this.checkFeedbacks('mute')
+						this.checkFeedbacks('volume')
+						this.checkFeedbacks('power')
+						break
+					default:
+						self.updateStatus(InstanceStatus.UnknownWarning, 'Failed to send request ' + data.req)
 				}
-			})
-		}
+			} else {
+				self.updateStatus(InstanceStatus.UnknownWarning, 'Unknown comms error')
+			}
+		})
+
+		// We use lots of the statuses and expose the others as variables
+		// It's also generally useful to trigger a connectionStatus message
+		self.dev.process(
+			'status?',
+			'model?',
+			'screensize?',
+			'sernum?',
+			'software?',
+			'fanspeed?',
+			'wallmode?',
+			'wallon?',
+			'walldef?',
+		)
+		// TODO(Peter): Sernum, screensize and possibly others only work when the device is powered on...
 	}
 
 	// Return config fields for web config
@@ -70,14 +182,186 @@ class SamsungDisplayInstance extends InstanceBase {
 				width: 6,
 				regex: Regex.IP,
 			},
+			{
+				type: 'textinput',
+				id: 'port',
+				label: 'Target Port',
+				width: 6,
+				default: '1515',
+				regex: Regex.PORT,
+			},
+			{
+				type: 'number',
+				id: 'id',
+				label: 'Target ID',
+				tooltip:
+					"This is the configured ID of this device, 0-253 (254 will broadcast to any ID but there won't be any feedback)",
+				width: 6,
+				default: 1,
+				min: 0,
+				max: 254,
+				regex: Regex.Number,
+			},
 		]
 	}
 
 	// When module gets deleted
 	destroy() {
-		this.socket.destroy()
+		if (this.dev !== undefined) {
+			this.dev.process('#close')
+			delete this.dev
+		}
 
 		this.log('debug', 'destroy ' + this.id)
+	}
+
+	init_variables() {
+		var variableDefinitions = []
+
+		variableDefinitions.push({
+			name: 'Power',
+			variableId: 'power',
+		})
+
+		variableDefinitions.push({
+			name: 'Volume',
+			variableId: 'volume',
+		})
+
+		variableDefinitions.push({
+			name: 'Mute',
+			variableId: 'mute',
+		})
+
+		variableDefinitions.push({
+			name: 'Input',
+			variableId: 'input',
+		})
+
+		variableDefinitions.push({
+			name: 'Model',
+			variableId: 'model',
+		})
+
+		variableDefinitions.push({
+			name: 'Screen Size',
+			variableId: 'screenSize',
+		})
+
+		variableDefinitions.push({
+			name: 'Software',
+			variableId: 'software',
+		})
+
+		variableDefinitions.push({
+			name: 'Serial Number',
+			variableId: 'sernum',
+		})
+
+		variableDefinitions.push({
+			name: 'Fan Speed',
+			variableId: 'fanspeed',
+		})
+
+		// TODO(Peter): Add and expose other variables
+		// "aspect":1,"NTimeNF":0,"FTimeNF":0,"wallMode":"full","wallOn":"off","Wall_Div":"off","Wall_SNo":0
+
+		this.setVariableDefinitions(variableDefinitions)
+	}
+
+	init_feedbacks() {
+		// feedbacks
+		var feedbacks = []
+
+		feedbacks['power'] = {
+			type: 'boolean',
+			name: 'Power',
+			description: 'If the power is in the specified state, give feedback',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Power',
+					id: 'state',
+					choices: this.CHOICES_POWER,
+				},
+			],
+			defaultStyle: {
+				color: combineRgb(0, 0, 0),
+				bgcolor: combineRgb(255, 255, 0),
+			},
+			callback: (feedback, bank) => {
+				return this.DATA.power == feedback.options.state
+			},
+		}
+
+		feedbacks['input'] = {
+			type: 'boolean',
+			name: 'Input',
+			description: 'If the input specified is the current input, give feedback',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Input',
+					id: 'input_name',
+					choices: this.CHOICES_INPUT,
+				},
+			],
+			defaultStyle: {
+				color: combineRgb(0, 0, 0),
+				bgcolor: combineRgb(255, 255, 0),
+			},
+			callback: (feedback, bank) => {
+				return this.DATA.input == feedback.options.input_name
+			},
+		}
+
+		feedbacks['mute'] = {
+			type: 'boolean',
+			name: 'Mute',
+			description: 'If the system is in the current mute state, give feedback',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Mute',
+					id: 'state',
+					choices: this.CHOICES_MUTE,
+				},
+			],
+			defaultStyle: {
+				color: combineRgb(0, 0, 0),
+				bgcolor: combineRgb(255, 255, 0),
+			},
+			callback: (feedback, bank) => {
+				return this.DATA.mute == feedback.options.state
+			},
+		}
+
+		feedbacks['volume'] = {
+			type: 'boolean',
+			name: 'Volume',
+			description: 'If the system volume is at the selected volume, give feedback',
+			options: [
+				{
+					type: 'number',
+					label: 'Volume',
+					id: 'volume',
+					default: 50,
+					min: 0,
+					max: 100,
+					required: true,
+					step: 5,
+				},
+			],
+			defaultStyle: {
+				color: combineRgb(0, 0, 0),
+				bgcolor: combineRgb(255, 255, 0),
+			},
+			callback: (feedback, bank) => {
+				return this.DATA.volume == parseInt(feedback.options.volume)
+			},
+		}
+
+		this.setFeedbackDefinitions(feedbacks)
 	}
 
 	init_presets() {
@@ -93,7 +377,16 @@ class SamsungDisplayInstance extends InstanceBase {
 				bgcolor: combineRgb(0, 0, 0),
 			},
 			steps: [{ down: [{ actionId: 'powerOn' }] }],
-			feedbacks: [],
+			feedbacks: [
+				{
+					feedbackId: 'power',
+					style: {
+						bgcolor: combineRgb(255, 255, 0),
+						color: combineRgb(0, 0, 0),
+					},
+					options: { state: 'on' },
+				},
+			],
 		})
 		presets.push({
 			category: 'Basics',
@@ -106,68 +399,140 @@ class SamsungDisplayInstance extends InstanceBase {
 				bgcolor: combineRgb(0, 0, 0),
 			},
 			steps: [{ down: [{ actionId: 'powerOff' }] }],
-			feedbacks: [],
+			feedbacks: [
+				{
+					feedbackId: 'power',
+					style: {
+						bgcolor: combineRgb(255, 255, 0),
+						color: combineRgb(0, 0, 0),
+					},
+					options: { state: 'off' },
+				},
+			],
 		})
+
+		for (var type in this.PRESETS_SETTINGS) {
+			for (var choice in this.PRESETS_SETTINGS[type].choices) {
+				var optionData = {}
+				optionData[this.PRESETS_SETTINGS[type].setting] = this.PRESETS_SETTINGS[type].choices[choice].id
+				presets[`${this.PRESETS_SETTINGS[type].action}_${this.PRESETS_SETTINGS[type].choices[choice].id}`] = {
+					category: this.PRESETS_SETTINGS[type].category,
+					name: this.PRESETS_SETTINGS[type].label + this.PRESETS_SETTINGS[type].choices[choice].label,
+					type: 'button',
+					style: {
+						text: this.PRESETS_SETTINGS[type].label + this.PRESETS_SETTINGS[type].choices[choice].label,
+						size: '14',
+						color: combineRgb(255, 255, 255),
+						bgcolor: combineRgb(0, 0, 0),
+					},
+					feedbacks: [
+						{
+							feedbackId: this.PRESETS_SETTINGS[type].feedback,
+							style: {
+								bgcolor: combineRgb(255, 255, 0),
+								color: combineRgb(0, 0, 0),
+							},
+							options: optionData,
+						},
+					],
+					steps: [
+						{
+							down: [
+								{
+									actionId: this.PRESETS_SETTINGS[type].action,
+									options: optionData,
+								},
+							],
+							up: [],
+						},
+					],
+				}
+			}
+		}
+
 		this.setPresetDefinitions(presets)
 	}
 
 	actions(system) {
-		this.setActionDefinitions({
+		system.setActionDefinitions({
 			powerOn: {
 				name: 'Power On Display',
 				options: [],
 				callback: async (action) => {
-					await this.doAction(action)
+					await system.doAction('power on')
 				},
 			},
 			powerOff: {
 				name: 'Power Off Display',
 				options: [],
 				callback: async (action) => {
-					await this.doAction(action)
+					await system.doAction('power off')
+				},
+			},
+			input: {
+				name: 'Input',
+				options: [
+					{
+						type: 'dropdown',
+						label: 'Input',
+						id: 'input_name',
+						choices: system.CHOICES_INPUT,
+						//default: 'HDMI1-PC',
+					},
+				],
+				callback: async (action) => {
+					await system.doAction('input ' + action.options.input_name)
+				},
+			},
+			mute: {
+				name: 'Mute',
+				options: [
+					{
+						type: 'dropdown',
+						label: 'Mute',
+						id: 'state',
+						choices: system.CHOICES_MUTE,
+						default: 'off',
+					},
+				],
+				callback: async (action) => {
+					await system.doAction('mute ' + action.options.state)
+				},
+			},
+			volume: {
+				name: 'Volume',
+				options: [
+					{
+						type: 'number',
+						label: 'Volume',
+						id: 'volume',
+						default: 50,
+						min: 0,
+						max: 100,
+						required: true,
+						step: 5,
+					},
+				],
+				callback: async (action) => {
+					await system.doAction('volume ' + action.options.volume)
 				},
 			},
 		})
 	}
 
-	doAction(action) {
-		let cmd
-		let end
+	doAction(cmd) {
+		let self = this
+		if (cmd !== undefined && cmd != '') {
+			self.log('debug', 'sending "' + cmd + '" to ' + this.config.host)
 
-		switch (action.actionId) {
-			case 'powerOn':
-				// response aa ff 01 03 41 11 01 56
-				cmd = Buffer.from(
-					['0xAA', '0x11', '0x01', '0x01', '0x01', '0x14', '0xAA', '0x11', '0xFE', '0x01', '0x01', '0x11'],
-					'latin1',
-				)
-				break
-			case 'powerOff':
-				// response aa ff 01 03 41 11 00 55
-				cmd = Buffer.from(
-					['0xAA', '0x11', '0x01', '0x01', '0x00', '0x13', '0xAA', '0x11', '0xFE', '0x01', '0x00', '0x10'],
-					'latin1',
-				)
-				break
-			default:
-				this.log('debug', 'unknown action')
-				break
-		}
-
-		/*
-		 * create a binary buffer pre-encoded 'latin1' (8bit no change bytes)
-		 * sending a string assumes 'utf8' encoding
-		 * which then escapes character values over 0x7F
-		 * and destroys the 'binary' content
-		 */
-		// let sendBuf = Buffer.from(cmd + end, 'latin1')
-		let sendBuf = cmd
-
-		if (sendBuf != '') {
-			this.log('debug', 'sending ' + sendBuf + ' to ' + this.config.host)
-
-			if (this.socket !== undefined && this.socket.isConnected) {
-				this.socket.send(sendBuf)
+			// This is using parts of the library that aren't publicly exposed and may change
+			if (
+				this.dev !== undefined &&
+				this.dev.mode == 'tcp' &&
+				this.dev.socket !== undefined &&
+				this.dev.socket.readyState === 'open'
+			) {
+				this.dev.process(cmd)
 			} else {
 				this.log('debug', 'Socket not connected :(')
 			}
