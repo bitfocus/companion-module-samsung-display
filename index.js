@@ -263,8 +263,18 @@ class SamsungDisplayInstance extends InstanceBase {
 			variableId: 'fanspeed',
 		})
 
+		variableDefinitions.push({
+			name: 'Wall Mode',
+			variableId: 'wallMode',
+		})
+
+		variableDefinitions.push({
+			name: 'Wall Status',
+			variableId: 'wallOn',
+		})
+
 		// TODO(Peter): Add and expose other variables
-		// "aspect":1,"NTimeNF":0,"FTimeNF":0,"wallMode":"full","wallOn":"off","Wall_Div":"off","Wall_SNo":0
+		// "aspect":1,"NTimeNF":0,"FTimeNF":0,"Wall_Div":"off","Wall_SNo":0
 
 		this.setVariableDefinitions(variableDefinitions)
 	}
