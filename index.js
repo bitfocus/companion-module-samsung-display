@@ -273,6 +273,11 @@ class SamsungDisplayInstance extends InstanceBase {
 			variableId: 'wallOn',
 		})
 
+		variableDefinitions.push({
+			name: 'Wall Monitor Number',
+			variableId: 'Wall_SNo',
+		})
+
 		// TODO(Peter): Add and expose other variables
 		// "aspect":1,"NTimeNF":0,"FTimeNF":0,"Wall_Div":"off","Wall_SNo":0
 
