@@ -1,6 +1,7 @@
 const { InstanceBase, InstanceStatus, TCPHelper, Regex, runEntrypoint } = require('@companion-module/base')
 const { combineRgb } = require('@companion-module/base')
 const SamsungD = require('samsung-lfd')
+const UpgradeScripts = require('./upgrades.js')
 
 class SamsungDisplayInstance extends InstanceBase {
 	init(config) {
@@ -92,11 +93,9 @@ class SamsungDisplayInstance extends InstanceBase {
 			self.updateStatus(InstanceStatus.BadConfig, `IP address is missing`)
 			return
 		} else if (!self.config.port) {
-			// TODO(Peter): Handle a lack of port in an existing config...
 			self.updateStatus(InstanceStatus.BadConfig, `Port is missing`)
 			return
-		} else if (!self.config.id) {
-			// TODO(Peter): Handle a lack of id in an existing config...
+		} else if (self.config.id == undefined || self.config.id === '') {
 			self.updateStatus(InstanceStatus.BadConfig, `ID is missing`)
 			return
 		}
@@ -197,7 +196,8 @@ class SamsungDisplayInstance extends InstanceBase {
 				tooltip:
 					"This is the configured ID of this device, 0-253 (254 will broadcast to any ID but there won't be any feedback)",
 				width: 6,
-				default: 1,
+				// Zero seems to be the default ID out of the box
+				default: 0,
 				min: 0,
 				max: 254,
 				regex: Regex.Number,
@@ -539,4 +539,4 @@ class SamsungDisplayInstance extends InstanceBase {
 		}
 	}
 }
-runEntrypoint(SamsungDisplayInstance, [])
+runEntrypoint(SamsungDisplayInstance, UpgradeScripts)
