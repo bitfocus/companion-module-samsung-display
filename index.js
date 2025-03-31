@@ -19,6 +19,20 @@ class SamsungDisplayInstance extends InstanceBase {
 			{ id: 'HDMI2', label: 'HDMI2' },
 			{ id: 'HDMI2-PC', label: 'HDMI2-PC' },
 			{ id: 'DP', label: 'DP' },
+			{ id: 'DP2', label: 'DP2' },
+			{ id: 'DP3', label: 'DP3' },
+			{ id: 'HDMI3', label: 'HDMI3' },
+			{ id: 'HDMI3-PC', label: 'HDMI3-PC' },
+			{ id: 'HDMI4', label: 'HDMI4' },
+			{ id: 'HDMI4-PC', label: 'HDMI4-PC' },
+			{ id: 'HD-BaseT', label: 'HD-BaseT' },
+			{ id: 'MagicInfo-S', label: 'MagicInfo-S' },
+			{ id: 'Screen Mirroring', label: 'Screen Mirroring' },
+			{ id: 'USB', label: 'USB' },
+			{ id: 'URL Launcher', label: 'URL Launcher' },
+			{ id: 'Whiteboard', label: 'Whiteboard' },
+			{ id: 'Web Browser', label: 'Web Browser' },
+			{ id: 'Remote Workspace', label: 'Remote Workspace' },
 		]
 
 		this.CHOICES_MUTE = [
