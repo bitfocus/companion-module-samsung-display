@@ -546,6 +546,22 @@ class SamsungDisplayInstance extends InstanceBase {
 					await system.doAction('volume ' + action.options.volume)
 				},
 			},
+			customCommand: {
+				name: 'Custom Command',
+				options: [
+					{
+						type: 'textinput',
+						label: 'Command',
+						id: 'command',
+						default: 'volume $(internal:time_s)',
+						useVariables: true,
+					},
+				],
+				callback: async (action, context) => {
+					const command = await context.parseVariablesInString(action.options.command)
+					await system.doAction(command)
+				},
+			},
 		})
 	}
 
