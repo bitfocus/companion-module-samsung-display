@@ -1166,10 +1166,10 @@ safe-buffer@^5.1.0:
   resolved "https://registry.yarnpkg.com/safe-buffer/-/safe-buffer-5.2.1.tgz#1eaf9fa9bdb1fdd4ec75f58f9cdb4e6b7827eec6"
   integrity sha512-rp3So07KcdmmKbGvgaNxQSJr7bGVSVk5S9Eq1F+ppbRo70+YeaDxkw5Dd8NPN+GD6bjnYm2VuPuCXmpuYvmCXQ==
 
-samsung-lfd@~1.0.4:
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/samsung-lfd/-/samsung-lfd-1.0.4.tgz#c0be4df99371f850662d13ba63bbece552bd712f"
-  integrity sha512-U4W/Sdu8r8v6RUorTjgC8XanardF+UsPG50BCSn6hLAW8rvBdqvbKlgvqCn+PmDgd/Pt/O+nI1e/B8XPjb7UBg==
+samsung-lfd@~1.0.5:
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/samsung-lfd/-/samsung-lfd-1.0.5.tgz#48fd1ebf71cf656fad65acb47b93e2eb9a7560c0"
+  integrity sha512-eUv+AiI4ukpP0DQ1uBlxPaEc1GWF/9/EoIImjBGhJ29nawVBfDVSLqwKiunU3ONKH8eTENidZBb5+ROWTXeTRw==
   dependencies:
     raw-device "1.1.x"
     xml2js "^0.4.23"
