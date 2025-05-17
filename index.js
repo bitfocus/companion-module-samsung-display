@@ -35,12 +35,19 @@ class SamsungDisplayInstance extends InstanceBase {
 			{ id: 'Remote Workspace', label: 'Remote Workspace' },
 		]
 
-		this.CHOICES_MUTE = [
+		this.CHOICES_ON_OFF = [
 			{ id: 'off', label: 'Off' },
 			{ id: 'on', label: 'On' },
 		]
 
-		this.CHOICES_POWER = this.CHOICES_MUTE
+		this.CHOICES_MUTE = this.CHOICES_ON_OFF
+		this.CHOICES_POWER = this.CHOICES_ON_OFF
+		this.CHOICES_WALL = this.CHOICES_ON_OFF
+
+		this.CHOICES_WALL_MODE = [
+			{ id: 'natural', label: 'Natural' },
+			{ id: 'full', label: 'Full' },
+		]
 
 		this.CHOICES_VOLUME = [
 			{ id: '0', label: '0' },
@@ -74,6 +81,22 @@ class SamsungDisplayInstance extends InstanceBase {
 				label: 'Volume ',
 				choices: this.CHOICES_VOLUME,
 				category: 'Volume',
+			},
+			{
+				action: 'wall',
+				setting: 'state',
+				feedback: 'wall',
+				label: 'Wall ',
+				choices: this.CHOICES_WALL,
+				category: 'Wall',
+			},
+			{
+				action: 'wallMode',
+				setting: 'mode',
+				feedback: 'wallMode',
+				label: 'Wall Mode ',
+				choices: this.CHOICES_WALL_MODE,
+				category: 'Wall',
 			},
 		]
 
@@ -160,6 +183,9 @@ class SamsungDisplayInstance extends InstanceBase {
 						this.checkFeedbacks('mute')
 						this.checkFeedbacks('volume')
 						this.checkFeedbacks('power')
+						this.checkFeedbacks('wall')
+						this.checkFeedbacks('wallMode')
+						this.checkFeedbacks('wallScreenNumber')
 						break
 					default:
 						self.updateStatus(InstanceStatus.UnknownWarning, 'Failed to send request ' + data.req)
@@ -378,7 +404,7 @@ class SamsungDisplayInstance extends InstanceBase {
 					min: 0,
 					max: 100,
 					required: true,
-					step: 5,
+					step: 1,
 				},
 			],
 			defaultStyle: {
@@ -387,6 +413,73 @@ class SamsungDisplayInstance extends InstanceBase {
 			},
 			callback: (feedback, bank) => {
 				return this.DATA.volume == parseInt(feedback.options.volume)
+			},
+		}
+
+		feedbacks['wall'] = {
+			type: 'boolean',
+			name: 'Wall',
+			description: 'If the system is in the current wall state, give feedback',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Wall',
+					id: 'state',
+					choices: this.CHOICES_WALL,
+				},
+			],
+			defaultStyle: {
+				color: combineRgb(0, 0, 0),
+				bgcolor: combineRgb(255, 255, 0),
+			},
+			callback: (feedback, bank) => {
+				return this.DATA.wallOn == feedback.options.state
+			},
+		}
+
+		feedbacks['wallMode'] = {
+			type: 'boolean',
+			name: 'Wall Mode',
+			description: 'If the wall mode is the current state, give feedback',
+			options: [
+				{
+					type: 'dropdown',
+					label: 'Mode',
+					id: 'mode',
+					choices: this.CHOICES_WALL_MODE,
+				},
+			],
+			defaultStyle: {
+				color: combineRgb(0, 0, 0),
+				bgcolor: combineRgb(255, 255, 0),
+			},
+			callback: (feedback, bank) => {
+				return this.DATA.wallMode == feedback.options.mode
+			},
+		}
+
+		feedbacks['wallScreenNumber'] = {
+			type: 'boolean',
+			name: 'Wall Screen Number',
+			description: 'If the wall screen number is the selected wall screen number, give feedback',
+			options: [
+				{
+					type: 'number',
+					label: 'Screen Number',
+					id: 'screenNumber',
+					default: 1,
+					min: 0,
+					max: 100,
+					required: true,
+					step: 1,
+				},
+			],
+			defaultStyle: {
+				color: combineRgb(0, 0, 0),
+				bgcolor: combineRgb(255, 255, 0),
+			},
+			callback: (feedback, bank) => {
+				return this.DATA.Wall_SNo == parseInt(feedback.options.screenNumber)
 			},
 		}
 
@@ -544,6 +637,36 @@ class SamsungDisplayInstance extends InstanceBase {
 				],
 				callback: async (action) => {
 					await system.doAction('volume ' + action.options.volume)
+				},
+			},
+			wall: {
+				name: 'Wall',
+				options: [
+					{
+						type: 'dropdown',
+						label: 'Wall',
+						id: 'state',
+						choices: system.CHOICES_WALL,
+						default: 'off',
+					},
+				],
+				callback: async (action) => {
+					await system.doAction('wallOn ' + action.options.state)
+				},
+			},
+			wallMode: {
+				name: 'Wall Mode',
+				options: [
+					{
+						type: 'dropdown',
+						label: 'Mode',
+						id: 'mode',
+						choices: system.CHOICES_WALL_MODE,
+						default: 'natural',
+					},
+				],
+				callback: async (action) => {
+					await system.doAction('wallMode ' + action.options.mode)
 				},
 			},
 			customCommand: {
