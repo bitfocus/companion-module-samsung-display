@@ -56,13 +56,19 @@ class SamsungDisplayInstance extends InstanceBase {
 			{ id: 'full', label: 'Full' },
 		]
 
-		this.CHOICES_VOLUME = [
+		this.CHOICES_0_100 = [
 			{ id: '0', label: '0' },
 			{ id: '25', label: '25' },
 			{ id: '50', label: '50' },
 			{ id: '75', label: '75' },
 			{ id: '100', label: '100' },
 		]
+
+		this.CHOICES_CONTRAST = this.CHOICES_0_100
+		this.CHOICES_BRIGHTNESS = this.CHOICES_0_100
+		this.CHOICES_SHARPNESS = this.CHOICES_0_100
+		this.CHOICES_SATURATION = this.CHOICES_0_100
+		this.CHOICES_TINT = this.CHOICES_0_100
 
 		this.PRESETS_SETTINGS = [
 			{
@@ -88,6 +94,46 @@ class SamsungDisplayInstance extends InstanceBase {
 				label: 'Volume ',
 				choices: this.CHOICES_VOLUME,
 				category: 'Volume',
+			},
+			{
+				action: 'contrast',
+				setting: 'contrast',
+				feedback: 'contrast',
+				label: 'Contrast ',
+				choices: this.CHOICES_CONTRAST,
+				category: 'Picture',
+			},
+			{
+				action: 'brightness',
+				setting: 'brightness',
+				feedback: 'brightness',
+				label: 'Brightness ',
+				choices: this.CHOICES_BRIGHTNESS,
+				category: 'Picture',
+			},
+			{
+				action: 'sharpness',
+				setting: 'sharpness',
+				feedback: 'sharpness',
+				label: 'Sharpness ',
+				choices: this.CHOICES_SHARPNESSS,
+				category: 'Picture',
+			},
+			{
+				action: 'saturation',
+				setting: 'saturation',
+				feedback: 'saturation',
+				label: 'Saturation ',
+				choices: this.CHOICES_SATURATION,
+				category: 'Picture',
+			},
+			{
+				action: 'tint',
+				setting: 'tint',
+				feedback: 'tint',
+				label: 'Tint ',
+				choices: this.CHOICES_TINT,
+				category: 'Picture',
 			},
 			{
 				action: 'wall',
@@ -190,6 +236,11 @@ class SamsungDisplayInstance extends InstanceBase {
 						this.checkFeedbacks('mute')
 						this.checkFeedbacks('volume')
 						this.checkFeedbacks('power')
+						this.checkFeedbacks('contrast')
+						this.checkFeedbacks('brightness')
+						this.checkFeedbacks('sharpness')
+						this.checkFeedbacks('saturation')
+						this.checkFeedbacks('tint')
 						this.checkFeedbacks('wall')
 						this.checkFeedbacks('wallMode')
 						this.checkFeedbacks('wallScreenNumber')
@@ -210,6 +261,11 @@ class SamsungDisplayInstance extends InstanceBase {
 			'screensize?',
 			'sernum?',
 			'software?',
+			'contrast?',
+			'brightness?',
+			'sharpness?',
+			'saturation?',
+			'tint?',
 			'fanspeed?',
 			'wallmode?',
 			'wallon?',
@@ -303,6 +359,31 @@ class SamsungDisplayInstance extends InstanceBase {
 		variableDefinitions.push({
 			name: 'Serial Number',
 			variableId: 'sernum',
+		})
+
+		variableDefinitions.push({
+			name: 'Contrast',
+			variableId: 'contrast',
+		})
+
+		variableDefinitions.push({
+			name: 'Brightness',
+			variableId: 'brightness',
+		})
+
+		variableDefinitions.push({
+			name: 'Sharpness',
+			variableId: 'sharpness',
+		})
+
+		variableDefinitions.push({
+			name: 'Saturation',
+			variableId: 'saturation',
+		})
+
+		variableDefinitions.push({
+			name: 'Tint',
+			variableId: 'tint',
 		})
 
 		variableDefinitions.push({
@@ -420,6 +501,131 @@ class SamsungDisplayInstance extends InstanceBase {
 			},
 			callback: (feedback, bank) => {
 				return this.DATA.volume == parseInt(feedback.options.volume)
+			},
+		}
+
+		feedbacks['contrast'] = {
+			type: 'boolean',
+			name: 'Contrast',
+			description: 'If the system contrast is at the selected level, give feedback',
+			options: [
+				{
+					type: 'number',
+					label: 'Contrast',
+					id: 'contrast',
+					default: 50,
+					min: 0,
+					max: 100,
+					required: true,
+					step: 1,
+				},
+			],
+			defaultStyle: {
+				color: combineRgb(0, 0, 0),
+				bgcolor: combineRgb(255, 255, 0),
+			},
+			callback: (feedback, bank) => {
+				return this.DATA.contrast == parseInt(feedback.options.contrast)
+			},
+		}
+
+		feedbacks['brightness'] = {
+			type: 'boolean',
+			name: 'Brightness',
+			description: 'If the system brightness is at the selected level, give feedback',
+			options: [
+				{
+					type: 'number',
+					label: 'Brightness',
+					id: 'brightness',
+					default: 50,
+					min: 0,
+					max: 100,
+					required: true,
+					step: 1,
+				},
+			],
+			defaultStyle: {
+				color: combineRgb(0, 0, 0),
+				bgcolor: combineRgb(255, 255, 0),
+			},
+			callback: (feedback, bank) => {
+				return this.DATA.brightness == parseInt(feedback.options.brightness)
+			},
+		}
+
+		feedbacks['sharpness'] = {
+			type: 'boolean',
+			name: 'Sharpness',
+			description: 'If the system sharpness is at the selected level, give feedback',
+			options: [
+				{
+					type: 'number',
+					label: '',
+					id: '',
+					default: 50,
+					min: 0,
+					max: 100,
+					required: true,
+					step: 1,
+				},
+			],
+			defaultStyle: {
+				color: combineRgb(0, 0, 0),
+				bgcolor: combineRgb(255, 255, 0),
+			},
+			callback: (feedback, bank) => {
+				return this.DATA.sharpness == parseInt(feedback.options.sharpness)
+			},
+		}
+
+		feedbacks['saturation'] = {
+			type: 'boolean',
+			name: 'Saturation',
+			description: 'If the system saturation is at the selected level, give feedback',
+			options: [
+				{
+					type: 'number',
+					label: 'Saturation',
+					id: 'saturation',
+					default: 50,
+					min: 0,
+					max: 100,
+					required: true,
+					step: 1,
+				},
+			],
+			defaultStyle: {
+				color: combineRgb(0, 0, 0),
+				bgcolor: combineRgb(255, 255, 0),
+			},
+			callback: (feedback, bank) => {
+				return this.DATA.saturation == parseInt(feedback.options.saturation)
+			},
+		}
+
+		feedbacks['tint'] = {
+			type: 'boolean',
+			name: 'Tint',
+			description: 'If the system tint is at the selected level, give feedback',
+			options: [
+				{
+					type: 'number',
+					label: 'Tint',
+					id: 'tint',
+					default: 50,
+					min: 0,
+					max: 100,
+					required: true,
+					step: 1,
+				},
+			],
+			defaultStyle: {
+				color: combineRgb(0, 0, 0),
+				bgcolor: combineRgb(255, 255, 0),
+			},
+			callback: (feedback, bank) => {
+				return this.DATA.tint == parseInt(feedback.options.tint)
 			},
 		}
 
@@ -639,11 +845,101 @@ class SamsungDisplayInstance extends InstanceBase {
 						min: 0,
 						max: 100,
 						required: true,
-						step: 5,
+						step: 1,
 					},
 				],
 				callback: async (action) => {
 					await system.doAction('volume ' + action.options.volume)
+				},
+			},
+			contrast: {
+				name: 'Contrast',
+				options: [
+					{
+						type: 'number',
+						label: 'Contrast',
+						id: 'contrast',
+						default: 50,
+						min: 0,
+						max: 100,
+						required: true,
+						step: 1,
+					},
+				],
+				callback: async (action) => {
+					await system.doAction('contrast ' + action.options.contrast)
+				},
+			},
+			brightness: {
+				name: 'Brightness',
+				options: [
+					{
+						type: 'number',
+						label: 'Brightness',
+						id: 'brightness',
+						default: 50,
+						min: 0,
+						max: 100,
+						required: true,
+						step: 1,
+					},
+				],
+				callback: async (action) => {
+					await system.doAction('brightness ' + action.options.brightness)
+				},
+			},
+			sharpness: {
+				name: 'Sharpness',
+				options: [
+					{
+						type: 'number',
+						label: 'Sharpness',
+						id: 'sharpness',
+						default: 50,
+						min: 0,
+						max: 100,
+						required: true,
+						step: 1,
+					},
+				],
+				callback: async (action) => {
+					await system.doAction('sharpness ' + action.options.sharpness)
+				},
+			},
+			saturation: {
+				name: 'Saturation',
+				options: [
+					{
+						type: 'number',
+						label: 'Saturation',
+						id: 'saturation',
+						default: 50,
+						min: 0,
+						max: 100,
+						required: true,
+						step: 1,
+					},
+				],
+				callback: async (action) => {
+					await system.doAction('saturation ' + action.options.saturation)
+				},
+			},
+			tint: {
+				name: 'Tint',
+				options: [
+					{
+						type: 'number',
+						label: 'Tint',
+						id: 'tint',
+						default: 50,
+						min: 0,
+						max: 100,
+						required: true,
+						step: 1,
+					},
+				],
+				callback: async (action) => {
+					await system.doAction('tint ' + action.options.tint)
 				},
 			},
 			wall: {
