@@ -2,45 +2,52 @@ const { InstanceBase, InstanceStatus, TCPHelper, Regex, runEntrypoint } = requir
 const { combineRgb } = require('@companion-module/base')
 const SamsungD = require('samsung-lfd')
 const UpgradeScripts = require('./upgrades.js')
+const { PassThrough } = require('stream')
 
 class SamsungDisplayInstance extends InstanceBase {
+	processSamsungDData(data) {
+		return data.dev.command.reduce(function (map, obj) {
+			if (!(obj.value === undefined) && obj.value) {
+				let values = obj.value
+				if (!Array.isArray(values)) {
+					values = [{ name: obj.name, item: values.item }]
+				}
+				map[obj.name] = values.reduce(function (valueArray, valueObj) {
+					let valueMap = {}
+					if ('name' in valueObj) {
+						valueMap['name'] = valueObj.name
+						if ('item' in valueObj) {
+							valueMap['values'] = Array.from(valueObj.item).map((item) => item.name)
+						} else {
+							valueMap['values'] = []
+						}
+						valueArray.push(valueMap)
+					}
+					return valueArray
+				}, [])
+			} else {
+				map[obj.name] = undefined
+			}
+			return map
+		}, {})
+	}
+
+	generateChoices(data, command, value) {
+		const items = data[command].find((element) => element.name == value)
+		if (items && items.values) {
+			var choices = []
+			items.values.forEach((choice) => {
+				choices.push({ id: choice, label: choice.charAt(0).toUpperCase() + choice.slice(1) })
+			})
+			return choices
+		} else {
+			return []
+		}
+	}
+
 	init(config) {
 		this.config = config
 		this.DATA = {}
-
-		this.CHOICES_INPUT = [
-			{ id: 'Component', label: 'Component' },
-			{ id: 'S-Video', label: 'S-Video' },
-			{ id: 'AV', label: 'AV' },
-			{ id: 'AV2', label: 'AV2' },
-			{ id: 'PC', label: 'PC' },
-			{ id: 'SCART1', label: 'SCART1' },
-			{ id: 'DVI', label: 'DVI' },
-			{ id: 'BNC', label: 'BNC' },
-			{ id: 'DVI-Video', label: 'DVI-Video' },
-			{ id: 'MagicInfo', label: 'MagicInfo' },
-			{ id: 'HDMI1', label: 'HDMI1' },
-			{ id: 'HDMI1-PC', label: 'HDMI1-PC' },
-			{ id: 'HDMI2', label: 'HDMI2' },
-			{ id: 'HDMI2-PC', label: 'HDMI2-PC' },
-			{ id: 'DP', label: 'DP' },
-			{ id: 'DP2', label: 'DP2' },
-			{ id: 'DP3', label: 'DP3' },
-			{ id: 'HDMI3', label: 'HDMI3' },
-			{ id: 'HDMI3-PC', label: 'HDMI3-PC' },
-			{ id: 'HDMI4', label: 'HDMI4' },
-			{ id: 'HDMI4-PC', label: 'HDMI4-PC' },
-			{ id: 'TV-DTV', label: 'TV-DTV' },
-			{ id: 'HD-BaseT', label: 'HD-BaseT' },
-			{ id: 'OCM', label: 'OCM' },
-			{ id: 'MagicInfo-S', label: 'MagicInfo-S' },
-			{ id: 'Screen Mirroring', label: 'Screen Mirroring' },
-			{ id: 'USB', label: 'USB' },
-			{ id: 'URL Launcher', label: 'URL Launcher' },
-			{ id: 'Whiteboard', label: 'Whiteboard' },
-			{ id: 'Web Browser', label: 'Web Browser' },
-			{ id: 'Remote Workspace', label: 'Remote Workspace' },
-		]
 
 		this.CHOICES_ON_OFF = [
 			{ id: 'off', label: 'Off' },
@@ -51,11 +58,6 @@ class SamsungDisplayInstance extends InstanceBase {
 		this.CHOICES_POWER = this.CHOICES_ON_OFF
 		this.CHOICES_WALL = this.CHOICES_ON_OFF
 
-		this.CHOICES_WALL_MODE = [
-			{ id: 'natural', label: 'Natural' },
-			{ id: 'full', label: 'Full' },
-		]
-
 		this.CHOICES_0_100 = [
 			{ id: '0', label: '0' },
 			{ id: '25', label: '25' },
@@ -64,11 +66,28 @@ class SamsungDisplayInstance extends InstanceBase {
 			{ id: '100', label: '100' },
 		]
 
+		this.CHOICES_VOLUME = this.CHOICES_0_100
 		this.CHOICES_CONTRAST = this.CHOICES_0_100
 		this.CHOICES_BRIGHTNESS = this.CHOICES_0_100
 		this.CHOICES_SHARPNESS = this.CHOICES_0_100
 		this.CHOICES_SATURATION = this.CHOICES_0_100
 		this.CHOICES_TINT = this.CHOICES_0_100
+
+		var tunnel = new PassThrough()
+		var tmpdev = new SamsungD({ stream: tunnel, id: 0 }, { disconnect: true })
+		//this.log('debug', 'SamsungD data ' + JSON.stringify(tmpdev.data.dev.command))
+		const commands = this.processSamsungDData(tmpdev.data)
+		//this.log('debug', 'Processed SamsungD data ' + JSON.stringify(commands))
+
+		//this.log('debug', 'SamsungD wallDef Wall_Div ' + JSON.stringify(this.generateChoices(commands, 'wallDef', 'Wall_Div')))
+		this.log(
+			'debug',
+			'SamsungD wallMode wallMode ' + JSON.stringify(this.generateChoices(commands, 'wallMode', 'wallMode')),
+		)
+
+		this.CHOICES_INPUT = this.generateChoices(commands, 'input', 'input')
+
+		this.CHOICES_WALL_MODE = this.generateChoices(commands, 'wallMode', 'wallMode')
 
 		this.PRESETS_SETTINGS = [
 			{
@@ -87,6 +106,7 @@ class SamsungDisplayInstance extends InstanceBase {
 				choices: this.CHOICES_MUTE,
 				category: 'Volume',
 			},
+
 			{
 				action: 'volume',
 				setting: 'volume',
