@@ -227,6 +227,9 @@ class SamsungDisplayInstance extends InstanceBase {
 						break
 					case 'closed':
 						self.updateStatus(InstanceStatus.Disconnected)
+						// Try to reconnect
+						// TODO(Peter): Do some sort of backoff?
+						self.dev.process('#connect')
 						break
 					case 'error':
 						// TODO(Peter): Extract more status
@@ -1034,6 +1037,7 @@ class SamsungDisplayInstance extends InstanceBase {
 			) {
 				this.dev.process(cmd)
 			} else {
+				// TODO(Peter): Should probably allow the internal # commands through regardless here
 				this.log('debug', 'Socket not connected :(')
 			}
 		}
