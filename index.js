@@ -225,8 +225,17 @@ class SamsungDisplayInstance extends InstanceBase {
 					case 'connected':
 						self.updateStatus(InstanceStatus.Ok)
 						break
+					case 'closed':
+						self.updateStatus(InstanceStatus.Disconnected)
+						break
+					case 'error':
+						// TODO(Peter): Extract more status
+						// e.g. "more":{"errno":-104,"code":"ECONNRESET","syscall":"read"}
+						self.updateStatus(InstanceStatus.UnknownError)
+						break
 					default:
 						self.updateStatus(InstanceStatus.ConnectionFailure, 'Failed to connect - ' + data.status)
+						break
 				}
 			} else {
 				self.updateStatus(InstanceStatus.UnknownError, 'Unknown failure connecting')
