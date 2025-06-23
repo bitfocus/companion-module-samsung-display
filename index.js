@@ -79,7 +79,6 @@ class SamsungDisplayInstance extends InstanceBase {
 		const commands = this.processSamsungDData(tmpdev.data)
 		//this.log('debug', 'Processed SamsungD data ' + JSON.stringify(commands))
 
-		//this.log('debug', 'SamsungD wallDef Wall_Div ' + JSON.stringify(this.generateChoices(commands, 'wallDef', 'Wall_Div')))
 		this.log(
 			'debug',
 			'SamsungD wallMode wallMode ' + JSON.stringify(this.generateChoices(commands, 'wallMode', 'wallMode')),
@@ -987,6 +986,21 @@ class SamsungDisplayInstance extends InstanceBase {
 				],
 				callback: async (action) => {
 					await system.doAction('wallOn ' + action.options.state)
+				},
+			},
+			wallMode: {
+				name: 'Wall Mode',
+				options: [
+					{
+						type: 'dropdown',
+						label: 'Mode',
+						id: 'mode',
+						choices: system.CHOICES_WALL_MODE,
+						default: 'natural',
+					},
+				],
+				callback: async (action) => {
+					await system.doAction('wallMode ' + action.options.mode)
 				},
 			},
 			wallMode: {
