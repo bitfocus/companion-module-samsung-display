@@ -277,9 +277,29 @@ class SamsungDisplayInstance extends InstanceBase {
 						this.checkFeedbacks('wall')
 						this.checkFeedbacks('wallMode')
 						this.checkFeedbacks('wallScreenNumber')
+
+						// Sernum, screensize and possibly others only work when the device is powered on...
+						if (data.req == 'status' && self.DATA['power'] == 'on') {
+							// TODO(Peter): || data.req == 'power' - Need to sleep if we've only just powered on...
+							self.dev.process(
+								'model?',
+								'screensize?',
+								'sernum?',
+								'software?',
+								'contrast?',
+								'brightness?',
+								'sharpness?',
+								'saturation?',
+								'tint?',
+								'fanspeed?',
+								'wallmode?',
+								'wallon?',
+								'walldef?',
+							)
+						}
 						break
 					default:
-						self.updateStatus(InstanceStatus.UnknownWarning, 'Failed to send request ' + data.req)
+						self.updateStatus(InstanceStatus.UnknownWarning, 'Request ' + data.req + ' failed')
 				}
 			} else {
 				self.updateStatus(InstanceStatus.UnknownWarning, 'Unknown comms error')
@@ -288,23 +308,7 @@ class SamsungDisplayInstance extends InstanceBase {
 
 		// We use lots of the statuses and expose the others as variables
 		// It's also generally useful to trigger a connectionStatus message
-		self.dev.process(
-			'status?',
-			'model?',
-			'screensize?',
-			'sernum?',
-			'software?',
-			'contrast?',
-			'brightness?',
-			'sharpness?',
-			'saturation?',
-			'tint?',
-			'fanspeed?',
-			'wallmode?',
-			'wallon?',
-			'walldef?',
-		)
-		// TODO(Peter): Sernum, screensize and possibly others only work when the device is powered on...
+		self.dev.process('status?')
 	}
 
 	// Return config fields for web config
