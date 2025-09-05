@@ -14,7 +14,7 @@
 	"author": "Jeffrey Davidsz <jeffrey.davidsz@vicreo.eu>",
 	"license": "MIT",
 	"dependencies": {
-		"@companion-module/base": "~1.11.0",
+		"@companion-module/base": "~1.13.1",
 		"samsung-lfd": "~1.1.0"
 	},
 	"prettier": "@companion-module/tools/.prettierrc.json",
