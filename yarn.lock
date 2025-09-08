@@ -2,20 +2,20 @@
 # yarn lockfile v1
 
 
-"@companion-module/base@~1.11.0":
-  version "1.11.0"
-  resolved "https://registry.yarnpkg.com/@companion-module/base/-/base-1.11.0.tgz#26ef06a9cf5edc9c7057043600dc5a7ad7ec2f23"
-  integrity sha512-SJvpAaZb6zSQQ6ub055criM6Frku5nzyN9F6OUrq/xjqbaqmf+xQtAJyiIMkfcIHfuE5EXv3hYWCZbwQSCrIoQ==
+"@companion-module/base@~1.13.2":
+  version "1.13.2"
+  resolved "https://registry.yarnpkg.com/@companion-module/base/-/base-1.13.2.tgz#004d81c77c153a60b1e38c9e8165123fcd8ca8af"
+  integrity sha512-bj5yFI1Hgg5g4ik+/dYU9r46W0wsMpyoESt/mWr0ianOs+s1ABO66oQesiQHB+RNKdpV/w8qmJXdTFtJIfR74Q==
   dependencies:
     ajv "^8.17.1"
     colord "^2.9.3"
     ejson "^2.2.3"
     eventemitter3 "^5.0.1"
     mimic-fn "^3.1.0"
-    nanoid "^3.3.7"
+    nanoid "^3.3.11"
     p-queue "^6.6.2"
     p-timeout "^4.1.0"
-    tslib "^2.7.0"
+    tslib "^2.8.1"
 
 "@companion-module/tools@^2.1.0":
   version "2.1.0"
@@ -950,7 +950,7 @@ ms@^2.1.3:
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.1.3.tgz#574c8138ce1d2b5861f0b44579dbadd60c6615b2"
   integrity sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==
 
-nanoid@^3.3.7:
+nanoid@^3.3.11:
   version "3.3.11"
   resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.3.11.tgz#4f4f112cefbe303202f2199838128936266d185b"
   integrity sha512-N8SpfPUnUp1bK+PMYW8qSWdl9U+wwNWI4QKxOYDy9JAro3WMX7p2OeVRF9v+347pnakNevPmiHhNmZ2HbFA76w==
@@ -1363,10 +1363,10 @@ terser@^5.26.0:
     commander "^2.20.0"
     source-map-support "~0.5.20"
 
-tslib@^2.6.2, tslib@^2.7.0:
-  version "2.7.0"
-  resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.7.0.tgz#d9b40c5c40ab59e8738f297df3087bf1a2690c01"
-  integrity sha512-gLXCKdN1/j47AiHiOkJN69hJmcbGTHI0ImLmbYLHykhgeN0jVGola9yVjFgzCUklsZQMW55o+dW7IXv3RCXDzA==
+tslib@^2.6.2, tslib@^2.8.1:
+  version "2.8.1"
+  resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.8.1.tgz#612efe4ed235d567e8aba5f2a5fab70280ade83f"
+  integrity sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==
 
 undici-types@~6.19.2:
   version "6.19.8"
