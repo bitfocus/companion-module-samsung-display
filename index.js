@@ -1009,21 +1009,6 @@ class SamsungDisplayInstance extends InstanceBase {
 					await system.doAction('wallMode ' + action.options.mode)
 				},
 			},
-			wallMode: {
-				name: 'Wall Mode',
-				options: [
-					{
-						type: 'dropdown',
-						label: 'Mode',
-						id: 'mode',
-						choices: system.CHOICES_WALL_MODE,
-						default: 'natural',
-					},
-				],
-				callback: async (action) => {
-					await system.doAction('wallMode ' + action.options.mode)
-				},
-			},
 			customCommand: {
 				name: 'Custom Command',
 				options: [
