@@ -1,4 +1,4 @@
-const { InstanceBase, InstanceStatus, TCPHelper, Regex, runEntrypoint } = require('@companion-module/base')
+const { InstanceBase, InstanceStatus, Regex, runEntrypoint } = require('@companion-module/base')
 const { combineRgb } = require('@companion-module/base')
 const SamsungD = require('samsung-lfd')
 const UpgradeScripts = require('./upgrades.js')
