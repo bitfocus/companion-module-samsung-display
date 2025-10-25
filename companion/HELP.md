@@ -17,6 +17,7 @@
 - Custom command
 
 **Available feedbacks in this module**
+
 - Power
 - Input
 - Mute
@@ -31,6 +32,7 @@
 - Video wall screen number
 
 **Available variables in this module**
+
 - Power
 - Volume
 - Mute
