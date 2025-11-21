@@ -1,4 +1,4 @@
-const { InstanceBase, InstanceStatus, TCPHelper, Regex, runEntrypoint } = require('@companion-module/base')
+const { InstanceBase, InstanceStatus, Regex, runEntrypoint } = require('@companion-module/base')
 const { combineRgb } = require('@companion-module/base')
 const SamsungD = require('samsung-lfd')
 const UpgradeScripts = require('./upgrades.js')
@@ -992,21 +992,6 @@ class SamsungDisplayInstance extends InstanceBase {
 				],
 				callback: async (action) => {
 					await system.doAction('wallOn ' + action.options.state)
-				},
-			},
-			wallMode: {
-				name: 'Wall Mode',
-				options: [
-					{
-						type: 'dropdown',
-						label: 'Mode',
-						id: 'mode',
-						choices: system.CHOICES_WALL_MODE,
-						default: 'natural',
-					},
-				],
-				callback: async (action) => {
-					await system.doAction('wallMode ' + action.options.mode)
 				},
 			},
 			wallMode: {
