@@ -15,11 +15,11 @@
 	"license": "MIT",
 	"dependencies": {
 		"@companion-module/base": "~1.11.0",
-		"samsung-lfd": "~1.0.5"
+		"samsung-lfd": "~1.1.0"
 	},
 	"prettier": "@companion-module/tools/.prettierrc.json",
 	"devDependencies": {
 		"@companion-module/tools": "^2.1.0",
-		"prettier": "^3.3.3"
+		"prettier": "^3.6.2"
 	}
 }
