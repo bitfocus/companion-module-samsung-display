@@ -1,6 +1,6 @@
 {
 	"name": "samsung-display",
-	"version": "2.0.0",
+	"version": "2.0.1",
         "main": "index.js",
 	"homepage": "https://github.com/bitfocus/companion-module-samsung-display#readme",
 	"scripts": {
