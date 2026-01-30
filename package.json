@@ -19,7 +19,7 @@
 	},
 	"prettier": "@companion-module/tools/.prettierrc.json",
 	"devDependencies": {
-		"@companion-module/tools": "^2.6.0",
+		"@companion-module/tools": "^2.6.1",
 		"prettier": "^3.8.1"
 	}
 }
