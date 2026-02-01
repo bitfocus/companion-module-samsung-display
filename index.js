@@ -227,9 +227,8 @@ class SamsungDisplayInstance extends InstanceBase {
 					case 'closed':
 						self.updateStatus(InstanceStatus.Disconnected)
 						// Try to reconnect
-						// TODO(Peter): Do some sort of backoff?
 						if (self.dev !== undefined) {
-							self.dev.process('#connect')
+							self.dev.process('#pause 1000', '#connect')
 						}
 						break
 					case 'error':
