@@ -17,7 +17,7 @@ class SamsungDisplayInstance extends InstanceBase {
 					if ('name' in valueObj) {
 						valueMap['name'] = valueObj.name
 						// TODO(Peter): Do some mapping of value fields with min/max
-						if (('item' in valueObj) && (valueObj.item !== undefined) && (Array.from(valueObj.item).length > 1)) {
+						if ('item' in valueObj && valueObj.item !== undefined && Array.from(valueObj.item).length > 1) {
 							valueMap['values'] = Array.from(valueObj.item).map((item) => item.name)
 						} else {
 							valueMap['values'] = []
