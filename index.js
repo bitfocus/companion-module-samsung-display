@@ -16,8 +16,9 @@ class SamsungDisplayInstance extends InstanceBase {
 					let valueMap = {}
 					if ('name' in valueObj) {
 						valueMap['name'] = valueObj.name
-						if ('item' in valueObj) {
-							valueMap['values'] = Array.from(valueObj.item).map((item) => item.name)
+						// TODO(Peter): Do some mapping of value fields with min/max
+						if ('item' in valueObj && valueObj.item !== undefined && Array.from(valueObj.item).length > 1) {
+							valueMap['values'] = Array.from(valueObj.item).map((item) => item.name.split(',', 1)[0])
 						} else {
 							valueMap['values'] = []
 						}
@@ -227,9 +228,8 @@ class SamsungDisplayInstance extends InstanceBase {
 					case 'closed':
 						self.updateStatus(InstanceStatus.Disconnected)
 						// Try to reconnect
-						// TODO(Peter): Do some sort of backoff?
 						if (self.dev !== undefined) {
-							self.dev.process('#connect')
+							self.dev.process('#pause 1000', '#connect')
 						}
 						break
 					case 'error':
