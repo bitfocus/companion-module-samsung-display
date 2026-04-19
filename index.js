@@ -16,8 +16,9 @@ class SamsungDisplayInstance extends InstanceBase {
 					let valueMap = {}
 					if ('name' in valueObj) {
 						valueMap['name'] = valueObj.name
-						if ('item' in valueObj) {
-							valueMap['values'] = Array.from(valueObj.item).map((item) => item.name)
+						// TODO(Peter): Do some mapping of value fields with min/max
+						if ('item' in valueObj && valueObj.item !== undefined && Array.from(valueObj.item).length > 1) {
+							valueMap['values'] = Array.from(valueObj.item).map((item) => item.name.split(',', 1)[0])
 						} else {
 							valueMap['values'] = []
 						}
@@ -48,6 +49,8 @@ class SamsungDisplayInstance extends InstanceBase {
 	init(config) {
 		this.config = config
 		this.DATA = {}
+
+		this.INTERVAL = null //used to poll for updates
 
 		this.CHOICES_ON_OFF = [
 			{ id: 'off', label: 'Off' },
@@ -177,6 +180,29 @@ class SamsungDisplayInstance extends InstanceBase {
 		this.init_feedbacks()
 		this.init_presets()
 		this.init_tcp()
+
+		this.setupInterval()
+	}
+
+	setupInterval() {
+		let self = this
+
+		self.stopInterval()
+
+		if (self.config.polling !== undefined && self.config.polling && self.config.interval > 0) {
+			self.INTERVAL = setInterval(self.getInformation.bind(self), self.config.interval)
+			self.log('info', 'Starting Update Interval: Every ' + self.config.interval + 'ms')
+		}
+	}
+
+	stopInterval() {
+		let self = this
+
+		if (self.INTERVAL !== null) {
+			self.log('info', 'Stopping Update Interval.')
+			clearInterval(self.INTERVAL)
+			self.INTERVAL = null
+		}
 	}
 
 	configUpdated(config) {
@@ -227,9 +253,9 @@ class SamsungDisplayInstance extends InstanceBase {
 					case 'closed':
 						self.updateStatus(InstanceStatus.Disconnected)
 						// Try to reconnect
-						// TODO(Peter): Do some sort of backoff?
 						if (self.dev !== undefined) {
-							self.dev.process('#connect')
+							// TODO(Peter): Do some sort of backoff?
+							self.dev.process('#pause 1000', '#connect')
 						}
 						break
 					case 'error':
@@ -281,11 +307,9 @@ class SamsungDisplayInstance extends InstanceBase {
 						// Sernum, screensize and possibly others only work when the device is powered on...
 						if (data.req == 'status' && self.DATA['power'] == 'on') {
 							// TODO(Peter): || data.req == 'power' - Need to sleep if we've only just powered on...
+							// TODO(Peter): Only need to successfully fetch these once
+							self.dev.process('model?', 'screensize?', 'sernum?', 'software?')
 							self.dev.process(
-								'model?',
-								'screensize?',
-								'sernum?',
-								'software?',
 								'contrast?',
 								'brightness?',
 								'sharpness?',
@@ -295,6 +319,9 @@ class SamsungDisplayInstance extends InstanceBase {
 								'wallmode?',
 								'wallon?',
 								'walldef?',
+								'displayStatus?',
+								'pMode?',
+								'video?',
 							)
 						}
 						break
@@ -305,6 +332,12 @@ class SamsungDisplayInstance extends InstanceBase {
 				self.updateStatus(InstanceStatus.UnknownWarning, 'Unknown comms error')
 			}
 		})
+
+		self.getInformation()
+	}
+
+	getInformation() {
+		let self = this
 
 		// We use lots of the statuses and expose the others as variables
 		// It's also generally useful to trigger a connectionStatus message
@@ -342,11 +375,41 @@ class SamsungDisplayInstance extends InstanceBase {
 				max: 254,
 				regex: Regex.Number,
 			},
+			{
+				type: 'checkbox',
+				id: 'polling',
+				label: 'Enable Polling',
+				width: 12,
+				default: false,
+			},
+			{
+				type: 'static-text',
+				id: 'intervalInfo',
+				width: 9,
+				label: 'Update Interval',
+				value: 'Please enter the amount of time in milliseconds to request new information from the device.',
+				isVisible: (configValues) => configValues.polling == true,
+			},
+			{
+				type: 'number',
+				id: 'interval',
+				label: 'Update Interval',
+				width: 3,
+				default: 5000,
+				min: 0,
+				step: 1,
+				isVisible: (configValues) => configValues.polling == true,
+			},
 		]
 	}
 
 	// When module gets deleted
 	destroy() {
+		if (this.INTERVAL) {
+			clearInterval(this.INTERVAL)
+			this.INTERVAL = null
+		}
+
 		if (this.dev !== undefined) {
 			this.dev.process('#close')
 			delete this.dev
@@ -443,8 +506,24 @@ class SamsungDisplayInstance extends InstanceBase {
 			variableId: 'Wall_SNo',
 		})
 
+		variableDefinitions.push({
+			name: 'No Sync',
+			variableId: 'No_Sync_Error',
+		})
+
+		variableDefinitions.push({
+			name: 'Temperature',
+			variableId: 'Cur_Temp',
+		})
+
+		variableDefinitions.push({
+			name: 'Picture Mode',
+			variableId: 'pMode',
+		})
+
 		// TODO(Peter): Add and expose other variables
 		// "aspect":1,"NTimeNF":0,"FTimeNF":0,"Wall_Div":"off","Wall_SNo":0
+		// "Lamp_Error":"normal","Temperature_Error":"normal","Bright_Sensor_Error":0,"Fan_Error":0
 
 		this.setVariableDefinitions(variableDefinitions)
 	}
