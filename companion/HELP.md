@@ -50,3 +50,11 @@
 - Video wall mode
 - Video wall state
 - Video wall monitor number
+
+**Configuration**
+
+You may need to turn on the following, to allow the module to turn displays back on when they've been turned off.
+
+ - System
+   - Power Control
+     - Remote Configuration
